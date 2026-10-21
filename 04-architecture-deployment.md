@@ -4,19 +4,19 @@
 
 The proposed active system is divided into six independently versioned repositories, each with a distinct ownership boundary and deployment responsibilities.
 
-- wealthops-web: React + TypeScript UI and client-side validation.
-- wealthops-backend: .NET 10 ASP.NET Core modular monolith, EF Core persistence, migrations, seed tooling, and two worker services.
-- wealthops-legacy-adapter: separately hosted .NET Framework 4.8.1 custodian adapter.
-- wealthops-pipelines: containerized Airflow DAGs and data-transformation workflows.
-- wealthops-platform: Docker/Helm/Kubernetes packaging, Terraform, AWS infrastructure, secrets, and observability configuration.
-- wealthops-contracts: independently versioned OpenAPI and Kafka event schemas, compatibility rules, and generated-client guidance.
+- wealthops-ai-web: React + TypeScript UI and client-side validation.
+- wealthops-ai-be: .NET 10 ASP.NET Core modular monolith, EF Core persistence, migrations, seed tooling, and two worker services.
+- wealthops-ai-legacy-adapter: separately hosted .NET Framework 4.8.1 custodian adapter.
+- wealthops-ai-pipelines: containerized Airflow DAGs and data-transformation workflows.
+- wealthops-ai-platform: Docker/Helm/Kubernetes packaging, Terraform, AWS infrastructure, secrets, and observability configuration.
+- wealthops-ai-contracts: independently versioned OpenAPI and Kafka event schemas, compatibility rules, and generated-client guidance.
 
 ## 4.2 High-Level Runtime Topology
 
 ```text
 Local: Docker Compose                         Production: AWS EKS + AWS managed services
 ---------------------                         -----------------------------------------
-Browser/UI --> Kong --> .NET 10 API            Browser/UI --> Kong --> .NET 10 API
+Browser --HTTPS--> Nginx --> .NET 10 API       Browser/UI --> Kong --> .NET 10 API
                          |                                                |
                          +--> EF Core --> PostgreSQL                      +--> EF Core --> RDS PostgreSQL
                          +--> Outbox --> Kafka                            +--> Outbox --> MSK Kafka
@@ -35,7 +35,7 @@ All supported workloads --> OpenTelemetry Collector --> local console/collector 
 ## 4.3 Deployment Strategy
 
 ### Local Development
-- Docker Compose runs the application and dependency stack locally: Kong, Kafka (single-node KRaft development mode), PostgreSQL, Airflow, UI, API, workers, and mock integrations.
+- Docker Compose runs the application and dependency stack locally: an Nginx HTTPS edge, Kafka (single-node KRaft development mode), PostgreSQL, Airflow, UI, API, workers, and mock integrations. Nginx reverse-proxies the web UI and browser API/OpenAPI traffic to internal containers; the backend is not published directly to the host. HTTPS covers browser-facing application traffic; internal Compose service traffic remains on the private network.
 - Optional LocalStack may emulate selected AWS APIs needed for local flows (initially S3 and Secrets Manager); local filesystem/environment test doubles remain the no-cost fallback. It is not a full replica of AWS or EKS.
 - A documented bootstrap command applies EF Core migrations, loads versioned synthetic fixtures idempotently, and runs smoke checks.
 - Compose profiles separate a fast dependency/test stack from the full local application stack.
@@ -64,7 +64,7 @@ All supported workloads --> OpenTelemetry Collector --> local console/collector 
 
 - Business state changes occur in the backend transactional boundary.
 - Async workflows use durable events and outbox patterns.
-- Kong is the external API boundary; Kafka is the asynchronous event backbone.
+- Kong is the planned production API boundary; local Compose terminates browser HTTPS at Nginx and proxies to the API over its private network. Kafka is the asynchronous event backbone.
 - Database schema changes flow through reviewed EF Core migrations, never ad-hoc startup DDL.
 - Financial correctness outranks UI convenience.
 - No direct database access from the UI.

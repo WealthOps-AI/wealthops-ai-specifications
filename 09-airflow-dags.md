@@ -2,7 +2,7 @@
 
 ## 9.1 Repository Responsibility
 
-The `wealthops-pipelines` repository owns Airflow DAGs and orchestration logic. Airflow, schedulers, and task executors are containerized. On Kubernetes, task execution uses isolated pods/container images. Airflow does not post ledger journals or modify authoritative financial records.
+The `wealthops-ai-pipelines` repository owns Airflow DAGs and orchestration logic. Airflow, schedulers, and task executors are containerized. On Kubernetes, task execution uses isolated pods/container images. Airflow does not post ledger journals or modify authoritative financial records.
 
 ## 9.2 Initial DAGs
 

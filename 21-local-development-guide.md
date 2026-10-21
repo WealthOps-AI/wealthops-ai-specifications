@@ -8,7 +8,7 @@ This guide describes the implemented local Compose foundation and identifies pla
 
 The current Compose definition provides:
 
-- PostgreSQL, a one-shot EF Core migrator/seeder, .NET 10 API, Kong Gateway, and React/Vite web app in the default profile.
+- PostgreSQL, a one-shot EF Core migrator/seeder, .NET 10 API, an Nginx HTTPS edge serving the React/Vite web app and proxying API/OpenAPI routes, in the default profile.
 - Optional standalone Kafka (KRaft mode) and Airflow containers in the `full` profile. Neither is wired to application event processing or pipelines yet.
 
 The legacy .NET Framework adapter, LocalStack, workers, and local telemetry stack are not yet included in Compose. The .NET Framework 4.8.1 adapter requires a Windows-compatible container/host and must never be a prerequisite for the core local platform.
@@ -16,40 +16,19 @@ The legacy .NET Framework adapter, LocalStack, workers, and local telemetry stac
 ## 21.3 Prerequisites
 
 - Docker Desktop for macOS/Windows or a compatible Docker Engine with Docker Compose v2.
-- Git and a terminal. PowerShell convenience scripts are available on Windows and can be used on macOS if PowerShell 7 is installed; macOS users can invoke Compose directly from Terminal.
+- Git and a terminal. Windows setup uses PowerShell; Linux/macOS setup uses Bash and `curl`.
 - Sufficient local memory/disk for PostgreSQL, Kafka, and Airflow containers.
 - No AWS account or paid service is required for local development.
 
 ## 21.4 First-Run Workflow
 
-From the workspace root, the implemented quick start is:
+Use the platform-owned, operating-system-specific [Windows setup guide](https://github.com/WealthOps-AI/wealthops-ai-platform/blob/master/local/GETTING-STARTED-WINDOWS.md) or [Linux/macOS setup guide](https://github.com/WealthOps-AI/wealthops-ai-platform/blob/master/local/GETTING-STARTED-LINUX-MACOS.md). The [organization profile](https://github.com/WealthOps-AI/.github/blob/master/profile/README.md) points contributors to the same instructions.
 
-```powershell
-Copy-Item .\wealthops-platform\local\config\.env.example .\wealthops-platform\local\config\.env
-.\wealthops-platform\local\scripts\start-local.ps1
-.\wealthops-platform\local\scripts\smoke-test.ps1
-```
+The setup scripts and Compose configuration live in `wealthops-ai-platform/local`. The default startup starts PostgreSQL, runs migrations and the Development seed in the one-shot migrator, then starts the API and Nginx edge, which serves the web app and proxies API/OpenAPI traffic. Optional Kafka and Airflow containers are started by the full profile and are not integrated with application event processing or pipelines.
 
-On macOS, copy the environment file and start the same Compose stack directly from Terminal:
+The local `.env` file is git-ignored; do not commit environment-specific values.
 
-```sh
-cp ./wealthops-platform/local/config/.env.example ./wealthops-platform/local/config/.env
-docker compose --env-file ./wealthops-platform/local/config/.env \
-  -f ./wealthops-platform/local/compose/compose.yml up --build -d
-curl -i http://localhost:8000/api/v1/accounts
-```
-
-The unauthenticated API request should return HTTP 401. Use `--profile full` with `docker compose up` to additionally start the optional Kafka and Airflow containers. The local `.env` file is git-ignored; do not commit environment-specific values.
-
-Use `start-local.ps1 -Full` to also launch the unintegrated Kafka and Airflow containers. The default startup starts the PostgreSQL dependency, runs migrations and the Development seed in the one-shot migrator, then starts the API, Kong, and web containers. To rerun the idempotent sample seed:
-
-```powershell
-.\wealthops-platform\local\scripts\load-sample-data.ps1
-```
-
-On macOS, use `docker compose --env-file ./wealthops-platform/local/config/.env -f ./wealthops-platform/local/compose/compose.yml run --rm migrator --seed`.
-
-The smoke test checks that an unauthenticated API request is rejected and a Development-token-authenticated request succeeds through Kong. Compose health checks separately verify PostgreSQL and API readiness.
+The smoke test checks that HTTP redirects to HTTPS, the locally trusted certificate is accepted, an unauthenticated API request is rejected, and a Development-token-authenticated request succeeds through Nginx. Compose health checks separately verify PostgreSQL and API readiness.
 
 Migration and seed scripts are explicit, repeatable operations. They must not rely on application startup side effects.
 
@@ -68,8 +47,8 @@ Migration and seed scripts are explicit, repeatable operations. They must not re
 
 Current automated local checks verify:
 
-- PostgreSQL and API health checks pass before the dependent gateway starts.
-- Kong routes authenticated API requests, and the backend rejects unauthenticated requests.
+- PostgreSQL and API health checks pass before the dependent Nginx edge starts.
+- Nginx proxies authenticated API requests over the private Compose network, and the backend rejects unauthenticated requests.
 - Synthetic advisor, household, client, and account records are present.
 
 Migration-version assertions, securities/positions/transactions, Kafka outbox checks, Airflow DAG checks, and financial side-effect assertions are not implemented yet.
@@ -80,7 +59,7 @@ The current Compose workflow supports:
 
 - view status/logs with `docker compose ps` and `docker compose logs -f <service>`;
 - restart one service without reseeding;
-- rerun the idempotent synthetic seed through `load-sample-data.ps1`;
+- rerun the idempotent synthetic seed through the platform-specific `load-sample-data` script;
 - stop services while preserving volumes.
 
 Migration selection, fixture export/import, a confirmation-gated reset tool, and expanded operational troubleshooting remain future work.
@@ -95,7 +74,7 @@ Do not use `docker compose down --volumes` as the normal stop command; it delete
 | Database | PostgreSQL container/volume | AWS RDS PostgreSQL |
 | Event streaming | Single-node Kafka container | AWS MSK |
 | Object storage/secrets | Optional LocalStack subset or local test doubles | S3 and AWS Secrets Manager with workload identity |
-| Ingress | Kong container | Kong on EKS, with any AWS edge service documented separately |
+| Ingress | Nginx HTTPS edge container | Kong on EKS, with any AWS edge service documented separately |
 | Pipeline runtime | Airflow containers | Airflow containers/tasks on EKS |
 | Deployment | Compose profiles and local scripts | Terraform infrastructure, Helm/Kubernetes releases, CI/CD |
 

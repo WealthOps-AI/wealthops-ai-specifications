@@ -2,16 +2,17 @@
 
 ## 20.1 Recommendation
 
-Use six active, independently versioned repositories. This is enough separation to model real ownership and release boundaries without splitting the initial modular backend into premature microservices.
+Use six independently versioned product repositories plus one independently versioned specifications repository. This is enough separation to model real ownership and release boundaries without splitting the initial modular backend into premature microservices.
 
 | Repository | Owns | Does not own |
 |---|---|---|
-| `wealthops-web` | React advisor/operations UI, browser tests, API client | Business rules, accounting, secrets |
-| `wealthops-backend` | .NET 10 modular monolith, EF Core persistence, migrations, seed tool, ledger, API, two .NET workers | Airflow DAGs, infrastructure |
-| `wealthops-legacy-adapter` | .NET Framework 4.8.1/Web API 2 custodian adapter and Windows-compatible packaging | Modern backend database or ledger |
-| `wealthops-pipelines` | Containerized Airflow, Python DAGs/modules, ingestion and analytics | Authoritative ledger posting |
-| `wealthops-platform` | Local Docker Compose, Terraform, production Kubernetes/Helm, Kong config, AWS deployment, observability/runbooks | Domain implementation |
-| `wealthops-contracts` | Versioned OpenAPI, Kafka event and file/data schemas, compatibility policy | Runtime business behavior |
+| `wealthops-ai-web` | React advisor/operations UI, browser tests, API client | Business rules, accounting, secrets |
+| `wealthops-ai-be` | .NET 10 modular monolith, EF Core persistence, migrations, seed tool, ledger, API, two .NET workers | Airflow DAGs, infrastructure |
+| `wealthops-ai-legacy-adapter` | .NET Framework 4.8.1/Web API 2 custodian adapter and Windows-compatible packaging | Modern backend database or ledger |
+| `wealthops-ai-pipelines` | Containerized Airflow, Python DAGs/modules, ingestion and analytics | Authoritative ledger posting |
+| `wealthops-ai-platform` | Local Docker Compose, Terraform, production Kubernetes/Helm, Kong config, AWS deployment, observability/runbooks | Domain implementation |
+| `wealthops-ai-contracts` | Versioned OpenAPI, Kafka event and file/data schemas, compatibility policy | Runtime business behavior |
+| `wealthops-ai-specifications` | Workspace and repository business, architecture, security, testing, and development documentation | Runtime application code |
 
 ### Why isolate the legacy adapter?
 
@@ -35,7 +36,7 @@ Dockerfile(s)
 configuration templates without credentials
 ```
 
-Each repository has its own version, tests, local setup, configuration documentation, CI/CD, and deployment instructions. Deployment ownership is centralized in `wealthops-platform`; source owners publish immutable container images and release metadata.
+Each repository has its own version, tests, local setup, configuration documentation, CI/CD, and deployment instructions. Deployment ownership is centralized in `wealthops-ai-platform`; source owners publish immutable container images and release metadata. The specifications repository documents shared cross-repository decisions and workflows.
 
 ## 20.3 Contracts and Release Coordination
 
@@ -50,9 +51,9 @@ Each repository has its own version, tests, local setup, configuration documenta
 
 These are not active repositories and are not part of the initial implementation:
 
-- `wealthops-copilot`: future home for GitHub Copilot custom agents, skills, prompts, instructions, and related artifacts.
-- `wealthops-claude`: future home for Claude-compatible skills/plugins and related artifacts.
-- `wealthops-temporal`: possible future workflow implementation only after a Temporal suitability decision.
+- `wealthops-ai-copilot`: future home for GitHub Copilot custom agents, skills, prompts, instructions, and related artifacts.
+- `wealthops-ai-claude`: future home for Claude-compatible skills/plugins and related artifacts.
+- `wealthops-ai-temporal`: possible future workflow implementation only after a Temporal suitability decision.
 
 The Copilot and Claude repositories should be designed as discoverable/versioned artifact catalogs, not assumed to be identical marketplaces. Their exact conventions, installation/distribution experience, trust and review controls, and cross-tool reuse strategy will be discussed separately. This plan does not create their contents.
 

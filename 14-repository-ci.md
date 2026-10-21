@@ -2,16 +2,17 @@
 
 ## 14.1 Repository Boundaries
 
-- `wealthops-web`: UI, frontend tests, API client, routing, accessibility checks.
-- `wealthops-backend`: ASP.NET Core API, domain modules, EF Core persistence/migrations, deterministic seed tool, workers, and ledger logic.
-- `wealthops-legacy-adapter`: separately hosted .NET Framework 4.8.1 custodian adapter, Windows-compatible image/host, contract tests, and isolated release pipeline.
-- `wealthops-pipelines`: containerized Airflow DAGs, staging logic, quality rules, and analytics tasks.
-- `wealthops-platform`: Docker Compose local stack, production Helm/Kubernetes packaging, Terraform for AWS EKS and managed services, Kong configuration, monitoring, and deployment runbooks.
-- `wealthops-contracts`: versioned OpenAPI specifications, Kafka event schemas, compatibility policy, and generated-client guidance. Avoid compile-time cross-repository coupling; consumers pin released contract versions.
+- `wealthops-ai-web`: UI, frontend tests, API client, routing, accessibility checks.
+- `wealthops-ai-be`: ASP.NET Core API, domain modules, EF Core persistence/migrations, deterministic seed tool, workers, and ledger logic.
+- `wealthops-ai-legacy-adapter`: separately hosted .NET Framework 4.8.1 custodian adapter, Windows-compatible image/host, contract tests, and isolated release pipeline.
+- `wealthops-ai-pipelines`: containerized Airflow DAGs, staging logic, quality rules, and analytics tasks.
+- `wealthops-ai-platform`: Docker Compose local stack, production Helm/Kubernetes packaging, Terraform for AWS EKS and managed services, Kong configuration, monitoring, and deployment runbooks.
+- `wealthops-ai-contracts`: versioned OpenAPI specifications, Kafka event schemas, compatibility policy, and generated-client guidance. Avoid compile-time cross-repository coupling; consumers pin released contract versions.
+- `wealthops-ai-specifications`: business, architecture, development, security, and testing documentation for the workspace and its repositories.
 
 ## 14.2 Proposed Repository Trees
 
-### `wealthops-web`
+### `wealthops-ai-web`
 
 ```text
 src/
@@ -23,7 +24,7 @@ Dockerfile
 README.md
 ```
 
-### `wealthops-backend`
+### `wealthops-ai-be`
 
 ```text
 src/
@@ -40,7 +41,7 @@ Dockerfile
 README.md
 ```
 
-### `wealthops-legacy-adapter`
+### `wealthops-ai-legacy-adapter`
 
 ```text
 src/                   # .NET Framework 4.8.1 adapter and Web API 2 host
@@ -50,7 +51,7 @@ Dockerfile.windows     # Windows container, subject to host/runtime compatibilit
 README.md
 ```
 
-### `wealthops-pipelines`
+### `wealthops-ai-pipelines`
 
 ```text
 dags/
@@ -61,7 +62,7 @@ Dockerfile
 README.md
 ```
 
-### `wealthops-platform`
+### `wealthops-ai-platform`
 
 ```text
 local/
@@ -79,7 +80,7 @@ runbooks/
 README.md
 ```
 
-### `wealthops-contracts`
+### `wealthops-ai-contracts`
 
 ```text
 openapi/
@@ -91,20 +92,20 @@ README.md
 
 ### Future assistant artifact repositories (deferred)
 
-- `wealthops-copilot`: later design for GitHub Copilot agents, skills, prompts, and instructions, with versioning, review, and discovery.
-- `wealthops-claude`: later design for Claude-compatible skills/plugins and supporting artifacts.
+- `wealthops-ai-copilot`: later design for GitHub Copilot agents, skills, prompts, and instructions, with versioning, review, and discovery.
+- `wealthops-ai-claude`: later design for Claude-compatible skills/plugins and supporting artifacts.
 - These are separate product/tooling artifact repositories, not runtime dependencies. Their format, publishing marketplace/discovery model, license review, and shared-artifact strategy need a separate decision. No such files are created in this specification phase.
 
 ### Future workflow migration (documentation only)
 
-- `wealthops-temporal` may be considered as a future repository only if the Temporal evaluation approves a distinct durable-workflow runtime.
+- `wealthops-ai-temporal` may be considered as a future repository only if the Temporal evaluation approves a distinct durable-workflow runtime.
 - It is not part of the initial repository set, and this specification phase adds no Temporal source code or deployment.
 
 ## 14.3 Repository Count Recommendation
 
-Use six active repositories: web, backend, legacy adapter, pipelines, platform, and contracts. This isolates the .NET Framework toolchain and Windows release lifecycle, keeps domain and ledger ownership together, gives data pipelines their independent Python/Airflow lifecycle, and prevents contract publishing from requiring consumers to build each other. Keep the platform repo as the local Compose and cloud deployment source of truth rather than adding a separate workspace repository initially.
+Use six product repositories: web, backend, legacy adapter, pipelines, platform, and contracts. Keep the independently versioned specifications repository as the documentation source for the workspace. This isolates the .NET Framework toolchain and Windows release lifecycle, keeps domain and ledger ownership together, gives data pipelines their independent Python/Airflow lifecycle, and prevents contract publishing from requiring consumers to build each other. Keep the platform repo as the local Compose and cloud deployment source of truth rather than adding another infrastructure repository.
 
-Defer `wealthops-copilot`, `wealthops-claude`, and any `wealthops-temporal` repository until their separate scope, publication/security model, and ownership are approved. Avoid creating empty implementation repositories now.
+Defer `wealthops-ai-copilot`, `wealthops-ai-claude`, and any `wealthops-ai-temporal` repository until their separate scope, publication/security model, and ownership are approved. Avoid creating empty implementation repositories now.
 
 ## 14.4 CI/CD Principles
 
